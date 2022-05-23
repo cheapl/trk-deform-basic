@@ -4,6 +4,7 @@ import numpy as np
 
 # Classes
 import DeformGraph as ed
+import utility as ut
 from icp import icp,draw_registration_result
 from icp import icp,draw_registration_result
 
@@ -20,6 +21,11 @@ if __name__ == '__main__':
 
     # Show this graph
     #ref_graph.visualization(3)
+
+    # Test utility
+    coeffs = ut.compute_vertex_neigh_coeffs(ref_graph, method=1)
+    print(coeffs)
+
 
     #initial_guess = np.eye(4)
     #affine_transform = icp(ref_mesh, tar_mesh, initial_guess)

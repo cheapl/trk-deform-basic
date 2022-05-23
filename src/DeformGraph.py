@@ -25,9 +25,8 @@ class DGraph:
         self.node_neighbours = self.build_node_neigh()
         # Build neighbours for vertices
         self.vertex_neighbours = self.build_vertex_neigh()
-        self.vertex_neigh_coeffs = self.compute_vertex_neigh_coeffs()
-
-        print(self.vertex_neigh_coeffs)
+        # Compute effective radius
+        self.theta = self.compute_effec_r()
 
     def mesh_vox_sampling(self, vox_size):
         # Construct point cloud use vertices of mesh
@@ -82,25 +81,24 @@ class DGraph:
         #print(vertex_neighbours)
         return vertex_neighbours
 
-    def compute_vertex_neigh_coeffs(self):
-        vertex_neigh_coeffs = []
-        for i in range(len(self.vertices)):
-            wj_vi = []
-            neighbours = self.vertex_neighbours[i]
-            vertex_pos = self.vertices[i]
-            k_plus_1_neigh_pos = self.node_positions[neighbours[self.k_vn]]
-            d_max = np.linalg.norm(vertex_pos-k_plus_1_neigh_pos)
-            for j in range(self.k_vn):
-                neigh_pos = self.node_positions[neighbours[j]]
-                temp = 1 - ( np.linalg.norm(vertex_pos-neigh_pos) / d_max )
-                w_j = math.pow(temp,2)
-                wj_vi.append(w_j)
-            vertex_neigh_coeffs.append(wj_vi)
-        # Normalize
-        np_coeffs = np.asarray(vertex_neigh_coeffs)
-        sum_of_rows = np_coeffs.sum(axis=1)
-        normalized_coeffs = np_coeffs / sum_of_rows[:, np.newaxis]
-        return normalized_coeffs
+    def compute_effec_r(self):
+        neigh_count = 0
+        neigh_dist_sum = 0
+        # Compute effective radius of the nodes(theta)
+        for i in range(len(self.node_neighbours)):
+            neighbours = self.node_neighbours[i]
+            center_pos = self.node_positions[i]
+            for neighbour in neighbours:
+                neigh_count += 1
+                neighbour_pos = self.node_positions[neighbour]
+                neigh_dist = np.linalg.norm(center_pos - neighbour_pos)
+                neigh_dist_sum += neigh_dist
+        # d in skinning weights (Fusion4D 5.1)
+        d = neigh_dist_sum / neigh_count
+        #theta = 0.5 * d
+        theta = d
+        #print(theta)
+        return theta
 
     def visualization(self, mode):
         # initialize a new mesh for visualization
