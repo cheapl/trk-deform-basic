@@ -19,7 +19,7 @@ if __name__ == '__main__':
     print('Faces numbers: ' + str(len(ref_graph.faces)))
 
     # Show this graph
-    ref_graph.visualization(3)
+    #ref_graph.visualization(3)
 
     #initial_guess = np.eye(4)
     #affine_transform = icp(ref_mesh, tar_mesh, initial_guess)
