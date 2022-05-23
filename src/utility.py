@@ -1,48 +1,31 @@
-# Libraries
 import open3d as o3d
-import numpy as np
-import math
 
-# Classes
-import DeformGraph as ed
-
-def compute_vertex_neigh_coeffs(graph, method):
-    # Method from original deformation node
-    if method == 0:
-        vertex_neigh_coeffs = []
-        for i in range(len(graph.vertices)):
-            wj_vi = []
-            neighbours = graph.vertex_neighbours[i]
-            vertex_pos = graph.vertices[i]
-            k_plus_1_neigh_pos = graph.node_positions[neighbours[graph.k_vn]]
-            d_max = np.linalg.norm(vertex_pos - k_plus_1_neigh_pos)
-            for j in range(graph.k_vn):
-                neigh_pos = graph.node_positions[neighbours[j]]
-                temp = 1 - (np.linalg.norm(vertex_pos - neigh_pos) / d_max)
-                w_j = math.pow(temp, 2)
-                wj_vi.append(w_j)
-            vertex_neigh_coeffs.append(wj_vi)
-        # Normalize
-        np_coeffs = np.asarray(vertex_neigh_coeffs)
-        sum_of_rows = np_coeffs.sum(axis=1)
-        normalized_coeffs = np_coeffs / sum_of_rows[:, np.newaxis]
-        return normalized_coeffs
-    # method from Fusion4D
-    elif method == 1:
-        vertex_neigh_coeffs = []
-        for i in range(len(graph.vertices)):
-            w_km = []
-            neighbours = graph.vertex_neighbours[i]
-            vertex_pos = graph.vertices[i]
-            for j in range(graph.k_vn):
-                neigh_pos = graph.node_positions[neighbours[j]]
-                dist = np.linalg.norm(vertex_pos - neigh_pos)
-                w_k = math.exp( -1 * (math.pow(dist,1) / (2 * math.pow(graph.theta,2))) )
-                w_km.append(w_k)
-            vertex_neigh_coeffs.append(w_km)
-        # Normalize
-        np_coeffs = np.asarray(vertex_neigh_coeffs)
-        sum_of_rows = np_coeffs.sum(axis=1)
-        normalized_coeffs = np_coeffs / sum_of_rows[:, np.newaxis]
-        #print(normalized_coeffs)
-        return normalized_coeffs
+def visualization(graph, mode):
+    # initialize a new mesh for visualization
+    rec_mesh = o3d.geometry.TriangleMesh()
+    # Copy vertices, normals and faces of graph to this new mesh
+    rec_mesh.vertices = o3d.utility.Vector3dVector(graph.vertices)
+    rec_mesh.vertex_normals = o3d.utility.Vector3dVector(graph.normals)
+    rec_mesh.triangles = o3d.utility.Vector3iVector(graph.faces)
+    # initialize a new pdc and visualization
+    rec_pcd = o3d.geometry.PointCloud()
+    rec_pcd.points = o3d.utility.Vector3dVector(graph.node_positions)
+    rec_pcd.normals = o3d.utility.Vector3dVector(graph.node_normals)
+    # Render it
+    rec_mesh.compute_vertex_normals()
+    if (mode == 0):
+        o3d.visualization.draw_geometries([rec_mesh, rec_pcd])
+    elif (mode == 1):
+        o3d.visualization.draw_geometries([rec_mesh])
+    elif (mode == 2):
+        o3d.visualization.draw_geometries([rec_pcd])
+    elif (mode == 3):
+        # build line use node neighbours
+        lines = []
+        for i in range(len(graph.node_neighbours)):
+            for j in range(len(graph.node_neighbours[i])):
+                if (graph.node_neighbours[i][j] != i):
+                    lines.append([i, graph.node_neighbours[i][j]])
+        lset = o3d.geometry.LineSet(o3d.utility.Vector3dVector(graph.node_positions),
+                                    o3d.utility.Vector2iVector(lines))
+        o3d.visualization.draw_geometries([rec_pcd, lset])

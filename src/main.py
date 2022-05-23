@@ -1,18 +1,16 @@
 # Libraries
 import open3d as o3d
-import numpy as np
 
-# Classes
-import DeformGraph as ed
-import utility as ut
+from dgraph import DGraph
 from icp import icp,draw_registration_result
-from icp import icp,draw_registration_result
+import deformer
+import utility
 
 if __name__ == '__main__':
     ref_mesh = o3d.io.read_triangle_mesh("model/human_0.obj")
     tar_mesh = o3d.io.read_triangle_mesh("model/human_1.obj")
     # initialize a graph
-    ref_graph = ed.DGraph(ref_mesh, sample_vox_size=0.1, max_dist_neigh=0.2, k_nn=10, k_vn=4)
+    ref_graph = DGraph(ref_mesh, sample_vox_size=0.1, max_dist_neigh=0.2, k_nn=10, k_vn=4)
 
     # Check number of each component of graph
     print('Vertices numbers: ' + str(len(ref_graph.vertices)))
@@ -21,10 +19,11 @@ if __name__ == '__main__':
 
     # Show this graph
     #ref_graph.visualization(3)
+    utility.visualization(ref_graph,3)
 
     # Test utility
-    coeffs = ut.compute_vertex_neigh_coeffs(ref_graph, method=1)
-    print(coeffs)
+    coeffs = deformer.compute_vertex_neigh_coeffs(ref_graph, method=1)
+    #print(coeffs)
 
 
     #initial_guess = np.eye(4)
