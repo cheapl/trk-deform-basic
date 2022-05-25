@@ -2,33 +2,19 @@ import open3d as o3d
 import numpy as np
 import copy
 
+import utility
 
-def draw_registration_result(source, target, transformation):
-    source_temp = copy.deepcopy(source)
-    target_temp = copy.deepcopy(target)
-    source_temp.paint_uniform_color([1, 0.706, 0])
-    target_temp.paint_uniform_color([0, 0.651, 0.929])
-    source_temp.transform(transformation)
-    source_temp.compute_vertex_normals()
-    target_temp.compute_vertex_normals()
-    o3d.visualization.draw_geometries([source_temp, target_temp])
+def icp(tef_graph, tar_mesh, trans_init=np.eye(4)):
+    source = o3d.geometry.PointCloud()
+    target = o3d.geometry.PointCloud()
 
+    source.points = o3d.utility.Vector3dVector(tef_graph.vertices)
+    target.points = tar_mesh.vertices
 
-def icp(source, target, trans_init=np.eye(4)):
-    sourcemesh = copy.deepcopy(source)
-    targetmesh = copy.deepcopy(target)
-    sourceply = o3d.geometry.PointCloud()
-    targetply = o3d.geometry.PointCloud()
-    sourcemesh.compute_vertex_normals()
-    targetmesh.compute_vertex_normals()
-    sourceply.points = sourcemesh.vertices
-    targetply.points = targetmesh.vertices
-    sourceply.normals = sourcemesh.vertex_normals
-    targetply.normals = targetmesh.vertex_normals
-
-    threshold = 0.02
+    threshold = 0.05
     reg_p2p = o3d.pipelines.registration.registration_icp(
-        sourceply, targetply, threshold, trans_init,
-        o3d.pipelines.registration.TransformationEstimationPointToPlane())
+        source, target, threshold, trans_init,
+        o3d.pipelines.registration.TransformationEstimationPointToPoint(),
+        o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=200))
 
     return reg_p2p.transformation
