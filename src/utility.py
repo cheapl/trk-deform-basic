@@ -36,7 +36,6 @@ def graph_to_mesh(graph):
     rec_mesh.triangles = o3d.utility.Vector3iVector(graph.faces)
     return rec_mesh
 
-
 def draw_registration_result(ref_graph, tar_mesh):
     ref_mesh = o3d.geometry.TriangleMesh()
     ref_mesh.vertices = o3d.utility.Vector3dVector(ref_graph.vertices)
@@ -56,20 +55,18 @@ def ref_to_tar_error(ref_graph,tar_mesh):
     tar_pcd = o3d.geometry.PointCloud()
     tar_pcd.points = tar_mesh.vertices
     errors = rec_pcd.compute_point_cloud_distance(tar_pcd)
-    #print(errors)
     np_errors = np.asarray(errors)
-    error = np.sum(np_errors)
-    #print(error)
-    return error
+    #print(max(np_errors))
+    error_num = len(np_errors)
+    torr = 0
+    for i in range(error_num):
+        if np_errors[i] < 0.0005:
+            torr = torr + 1
+    error_rate = torr / error_num
+    error_sum = np.sum(np_errors)
+    return error_sum, error_rate
 
 
-def affine_to_rigidRT(graph, rigid_affine):
-    node_num = len(graph.node_positions)
-    print(rigid_affine)
-    rot = rigid_affine[0:3, 0:3]
-    tran = np.transpose(rigid_affine[0:3, 3:4])
-    rots = np.broadcast_to(rot, (node_num, 3, 3))
-    trans = np.broadcast_to(tran, (node_num, 3))
-    return rots, trans
 
-#def affine_to_deformRT(deform_affine):
+
+

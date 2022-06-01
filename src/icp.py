@@ -2,7 +2,7 @@ import open3d as o3d
 import numpy as np
 import copy
 
-import utility
+import src.utility as utility
 
 def icp(tef_graph, tar_mesh, trans_init=np.eye(4)):
     source = o3d.geometry.PointCloud()

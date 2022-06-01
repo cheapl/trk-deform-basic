@@ -1,6 +1,6 @@
 import open3d as o3d
 import numpy as np
-import deformer
+import src.deformer as deformer
 
 class DGraph:
     def __init__(self, mesh, sample_vox_size, max_dist_neigh, k_nn, k_vn):
@@ -9,8 +9,12 @@ class DGraph:
         self.faces = np.asarray(mesh.triangles)
         # Sample vertices to get graph nodes
         self.node_positions = self.mesh_vox_sampling(sample_vox_size)
+
         # Initialize rotation matrices and transformation matrices for nodes
+        #rot = np.asarray([[0,-1,0],[1,0,0],[0,0,1]])
+        # self.node_rots = np.broadcast_to(rot, (len(self.node_positions), 3, 3))
         self.node_rots = np.broadcast_to(np.identity(3), (len(self.node_positions), 3, 3))
+
         self.node_trans = np.zeros((len(self.node_positions), 3))
         # Parameters for building neighbours
         self.max_dist_neigh = max_dist_neigh
@@ -19,8 +23,7 @@ class DGraph:
         # Build neighbours for nodes
         self.node_neighbours = self.build_node_neigh()
         # Build neighbours for vertices
-        self.vertex_neighbours = self.build_vertex_neigh(4)
-        self.vertex_neighbours_plus_one = self.build_vertex_neigh(5)
+        self.vertex_neighbours, self.vertex_neighbours_pos = self.build_vertex_neigh()
         # Compute effective radius
         self.effec_r = self.compute_effec_r()
 
@@ -51,9 +54,10 @@ class DGraph:
         # Return result
         return node_neighbours
 
-    def build_vertex_neigh(self,k_vn):
+    def build_vertex_neigh(self):
         # Initialize list of vertices' neighbours nodes
         vertex_neighbours = []
+        vertex_neighbours_pos = []
         # Generate pcd for nodes
         node_pcd = o3d.geometry.PointCloud()
         node_pcd.points = o3d.utility.Vector3dVector(self.node_positions)
@@ -63,10 +67,12 @@ class DGraph:
         vertex_pcd.points = o3d.utility.Vector3dVector(self.vertices)
         # Do KNN search  based on KDTrees
         for i in range(len(self.vertices)):
-            [k, idx, _] = pcd_tree.search_knn_vector_3d(vertex_pcd.points[i], k_vn)
+            [k, idx, _] = pcd_tree.search_knn_vector_3d(vertex_pcd.points[i], self.k_vn)
             vertex_neighbours.append(list(idx))
+            vertex_neighbours_pos.append(np.asarray(node_pcd.points)[idx[0:], :])
         # Return result
-        return vertex_neighbours
+        np_vertex_neighbours_pos = np.asarray(vertex_neighbours_pos)
+        return vertex_neighbours, np_vertex_neighbours_pos
 
     def compute_effec_r(self):
         neigh_count = 0
